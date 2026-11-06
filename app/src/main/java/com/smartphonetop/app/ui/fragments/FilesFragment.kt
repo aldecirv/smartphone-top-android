@@ -27,6 +27,7 @@ import com.smartphonetop.app.ui.Refreshable
 import com.smartphonetop.app.ui.adapters.MediaAdapter
 import com.smartphonetop.app.util.Permissions
 import kotlinx.coroutines.launch
+import java.util.concurrent.TimeUnit
 
 class FilesFragment : Fragment(), Refreshable {
 
@@ -34,18 +35,23 @@ class FilesFragment : Fragment(), Refreshable {
     private val binding get() = _binding!!
     private var files: List<MediaEntry> = emptyList()
     private var filter = "ALL"
-    private var pendingDelete: MediaEntry? = null
+    private var selectionMode = false
+    private val selected = mutableSetOf<Uri>()
+    private var pendingDelete: List<MediaEntry> = emptyList()
+    private var duplicateUris: Set<Uri> = emptySet()
     private var scanning = false
 
     private val mediaPermission = registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) {
         scan()
     }
     private val deleteLauncher = registerForActivityResult(ActivityResultContracts.StartIntentSenderForResult()) { result ->
-        val entry = pendingDelete
-        pendingDelete = null
-        if (result.resultCode == Activity.RESULT_OK && entry != null) {
-            SmartStore.recordClean("Mídia", entry.sizeBytes, 1, "Exclusão de ${entry.name}")
-            toast("${entry.name} excluído")
+        val entries = pendingDelete
+        pendingDelete = emptyList()
+        if (result.resultCode == Activity.RESULT_OK && entries.isNotEmpty()) {
+            val freed = entries.sumOf { it.sizeBytes }
+            SmartStore.recordClean("Mídia", freed, entries.size, entries.take(3).joinToString { it.name })
+            selected.clear()
+            toast("${entries.size} arquivo(s) excluído(s) • ${formatBytes(freed)}")
             scan()
         }
     }
@@ -68,8 +74,33 @@ class FilesFragment : Fragment(), Refreshable {
             }
             render()
         }
-        if (Permissions.hasMediaPermission(requireContext())) scan()
-        else refresh()
+        binding.selectButton.setOnClickListener { toggleSelectionMode() }
+        binding.largeCard.setOnClickListener {
+            filter = "LARGE"
+            binding.filterAll.isChecked = false
+            binding.filterImages.isChecked = false
+            binding.filterVideos.isChecked = false
+            binding.filterAudio.isChecked = false
+            render()
+        }
+        binding.oldCard.setOnClickListener {
+            filter = "OLD"
+            binding.filterAll.isChecked = false
+            binding.filterImages.isChecked = false
+            binding.filterVideos.isChecked = false
+            binding.filterAudio.isChecked = false
+            render()
+        }
+        binding.duplicateCard.setOnClickListener {
+            filter = "DUP"
+            binding.filterAll.isChecked = false
+            binding.filterImages.isChecked = false
+            binding.filterVideos.isChecked = false
+            binding.filterAudio.isChecked = false
+            render()
+        }
+        binding.deleteSelected.setOnClickListener { confirmDeleteSelected() }
+        if (Permissions.hasMediaPermission(requireContext())) scan() else refresh()
     }
 
     override fun onResume() {
@@ -87,6 +118,8 @@ class FilesFragment : Fragment(), Refreshable {
             binding.emptyState.visibility = View.VISIBLE
             binding.emptyTitle.text = "Permissão necessária"
             binding.count.text = "Acesso à mídia não concedido"
+            binding.selectButton.visibility = View.GONE
+            binding.selectionBar.visibility = View.GONE
             return
         }
         scanning = true
@@ -94,21 +127,69 @@ class FilesFragment : Fragment(), Refreshable {
         binding.emptyState.visibility = View.GONE
         lifecycleScope.launch {
             files = MediaScanner.scan(requireContext())
+            duplicateUris = MediaScanner.findExactDuplicates(requireContext(), files)
             scanning = false
             render()
         }
     }
 
+    private fun filteredFiles(): List<MediaEntry> {
+        val oldThreshold = System.currentTimeMillis() - TimeUnit.DAYS.toMillis(30)
+        return when (filter) {
+            "LARGE" -> files.filter { it.sizeBytes > 50L * 1024 * 1024 }
+            "OLD" -> files.filter {
+                it.kind == MediaKind.IMAGE && it.dateAdded * 1000L < oldThreshold &&
+                    (it.name.contains("screenshot", true) || it.name.contains("captura", true))
+            }
+            "DUP" -> files.filter { duplicateUris.contains(it.uri) }
+            "ALL" -> files
+            else -> files.filter { it.kind.name == filter }
+        }
+    }
+
     private fun render() {
         if (_binding == null) return
-        val filtered = files.filter {
-            filter == "ALL" || it.kind.name == filter
+        val filtered = filteredFiles()
+        val large = files.filter { it.sizeBytes > 50L * 1024 * 1024 }
+        val old = files.filter {
+            it.kind == MediaKind.IMAGE && it.dateAdded * 1000L < System.currentTimeMillis() - TimeUnit.DAYS.toMillis(30) &&
+                (it.name.contains("screenshot", true) || it.name.contains("captura", true))
         }
+        binding.largeCount.text = "${large.size} • ${formatBytes(large.sumOf { it.sizeBytes })}"
+        binding.oldCount.text = "${old.size} • ${formatBytes(old.sumOf { it.sizeBytes })}"
+        binding.duplicateCount.text = duplicateUris.size.toString()
         binding.count.text = "${filtered.size} arquivo(s)  •  ${formatBytes(filtered.sumOf { it.sizeBytes })}"
         binding.list.visibility = if (filtered.isEmpty()) View.GONE else View.VISIBLE
         binding.emptyState.visibility = if (filtered.isEmpty()) View.VISIBLE else View.GONE
         binding.emptyTitle.text = "Nenhuma mídia encontrada"
-        binding.list.adapter = MediaAdapter(filtered, onOpen = ::openFile, onDelete = ::confirmDelete)
+        binding.selectButton.visibility = if (files.isEmpty()) View.GONE else View.VISIBLE
+        binding.selectButton.text = if (selectionMode) "Cancelar" else "Selecionar"
+        binding.selectionBar.visibility = if (selectionMode) View.VISIBLE else View.GONE
+        binding.selectionCount.text = "${selected.size} selecionado(s) • ${formatBytes(selected.sumOf { uri -> files.firstOrNull { it.uri == uri }?.sizeBytes ?: 0L })}"
+        binding.deleteSelected.isEnabled = selected.isNotEmpty()
+        binding.deleteSelected.alpha = if (selected.isEmpty()) 0.5f else 1f
+        binding.list.adapter = MediaAdapter(
+            filtered,
+            selectionMode,
+            selected,
+            onOpen = ::openFile,
+            onToggle = ::toggleSelection,
+            onDelete = ::confirmDelete
+        )
+    }
+
+    private fun toggleSelectionMode() {
+        selectionMode = !selectionMode
+        if (!selectionMode) selected.clear()
+        render()
+    }
+
+    private fun toggleSelection(entry: MediaEntry) {
+        if (!selectionMode) {
+            selectionMode = true
+        }
+        if (selected.contains(entry.uri)) selected.remove(entry.uri) else selected.add(entry.uri)
+        render()
     }
 
     private fun openFile(entry: MediaEntry) {
@@ -127,31 +208,51 @@ class FilesFragment : Fragment(), Refreshable {
             .setTitle("Excluir arquivo?")
             .setMessage("${entry.name}\n${entry.formattedSize}\n\nEssa ação remove a mídia do aparelho.")
             .setNegativeButton("Cancelar", null)
-            .setPositiveButton("Excluir") { _, _ -> delete(entry) }
+            .setPositiveButton("Excluir") { _, _ -> deleteEntries(listOf(entry)) }
             .show()
     }
 
-    private fun delete(entry: MediaEntry) {
+    private fun confirmDeleteSelected() {
+        val entries = files.filter { selected.contains(it.uri) }
+        if (entries.isEmpty()) return
+        MaterialAlertDialogBuilder(requireContext())
+            .setTitle("Excluir ${entries.size} arquivo(s)?")
+            .setMessage("Total: ${formatBytes(entries.sumOf { it.sizeBytes })}\n\nEssa ação remove a mídia selecionada do aparelho.")
+            .setNegativeButton("Cancelar", null)
+            .setPositiveButton("Excluir") { _, _ -> deleteEntries(entries) }
+            .show()
+    }
+
+    private fun deleteEntries(entries: List<MediaEntry>) {
+        if (entries.isEmpty()) return
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            pendingDelete = entry
+            pendingDelete = entries
             runCatching {
-                val pending = MediaStore.createDeleteRequest(requireContext().contentResolver, listOf(entry.uri))
+                val pending = MediaStore.createDeleteRequest(requireContext().contentResolver, entries.map { it.uri })
                 deleteLauncher.launch(IntentSenderRequest.Builder(pending.intentSender).build())
             }.onFailure {
-                pendingDelete = null
+                pendingDelete = emptyList()
                 toast("O Android não permitiu solicitar a exclusão")
             }
         } else {
             runCatching {
-                val deleted = requireContext().contentResolver.delete(entry.uri, null, null)
-                if (deleted > 0) {
-                    SmartStore.recordClean("Mídia", entry.sizeBytes, 1, "Exclusão de ${entry.name}")
-                    toast("Arquivo excluído")
+                var freed = 0L
+                var count = 0
+                entries.forEach { entry ->
+                    if (requireContext().contentResolver.delete(entry.uri, null, null) > 0) {
+                        freed += entry.sizeBytes
+                        count++
+                    }
+                }
+                if (freed > 0) {
+                    SmartStore.recordClean("Mídia", freed, count, entries.take(3).joinToString { it.name })
+                    selected.clear()
+                    toast("$count arquivo(s) excluído(s)")
                     scan()
                 } else {
                     toast("Não foi possível excluir")
                 }
-            }.onFailure { toast("Sem permissão para excluir este arquivo") }
+            }.onFailure { toast("Sem permissão para excluir estes arquivos") }
         }
     }
 

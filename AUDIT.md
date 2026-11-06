@@ -30,7 +30,7 @@ Base: `smartphone-top.zip` (web app React/Vite + trechos de Android Compose em `
 | TOP AI | Gemini via servidor | Assistente local determinístico, sem rede |
 | Histórico | Mock | `SmartStore` com apenas liberações medidas |
 | Permissões | `MANAGE_EXTERNAL_STORAGE` etc. | Uso, mídia e escrita antiga; sem acesso total arbitrário |
-| Testes | Nenhum | 4 testes + screenshots |
+| Testes | Nenhum | 5 testes + screenshots |
 | APK | Não existia | APK assinado, CI e release |
 
 ## Escopo implementado
@@ -49,7 +49,8 @@ Base: `smartphone-top.zip` (web app React/Vite + trechos de Android Compose em `
 ## O que foi deliberadamente omitido
 
 - “Limpeza profunda” automática de cache/dados de outros apps: bloqueada pelo Android e exigiria root/acessibilidade, práticas que não foram adotadas.
-- Detecção de malware, duplicados, fotos borradas e APKs antigos: o material web simulava isso; sem implementação real, seria desonesto exibir resultados.
+- Detecção de malware, fotos borradas/semelhantes, arquivos residuais e APKs antigos: o material web simulava isso; sem implementação real, seria desonesto exibir resultados. Duplicadas exatas de mídia foram implementadas com SHA-256; ver revisão 1.1.0.
+- Compressão de mídia e perfis de aparelho: recursos do preview sem equivalente nativo seguro nesta versão.
 - Ciclos/capacidade de bateria: não disponíveis de forma confiável.
 - Perfis de dispositivo fictícios e tema claro/escuro da web: o app usa dados reais do aparelho e tema escuro fixo.
 
@@ -59,3 +60,18 @@ Base: `smartphone-top.zip` (web app React/Vite + trechos de Android Compose em `
 - Sem permissão de uso, tamanhos ficam “Indisponível” em vez de estimados.
 - Exclusão de mídia depende do provedor e das permissões.
 - Validação por Robolectric/screenshots; recomenda-se testar em aparelho físico.
+
+## Revisão 1.1.0 — paridade com o preview
+
+O preview em `smartphone-top.ai.studio` foi comparado com a versão 1.0.0. A 1.1.0 amplia a experiência sem copiar dados simulados:
+
+- Navegação de 5 centrais (Início, Limpeza, Arquivos, Bateria, Apps) + folha “Mais” (Segurança, TOP AI, Histórico, Ajustes).
+- Aba Bateria com diagnóstico real do `BatteryManager`; ciclos/capacidade continuam explicitamente indisponíveis.
+- Início com análise real de cache e mídia em diálogo, além de atalhos para Bateria/TOP AI.
+- Arquivos com mídia real, miniaturas, arquivos grandes, capturas antigas, duplicadas exatas por SHA-256, seleção múltipla e exclusão via `MediaStore.createDeleteRequest`.
+- Apps com último uso (UsageStatsManager), filtro “sem uso”, versão, instalador, permissões solicitadas e diálogo de detalhes.
+- Segurança com apps fora da Play Store e resumo de permissões sensíveis **solicitadas** (não é possível ler permissões concedidas de outros apps).
+- Relação de recursos do preview:
+  - **Implementado com dados reais**: navegação, cache assistido, mídia, duplicadas exatas, apps, bateria, segurança, histórico, ajustes.
+  - **Não implementado / não falsificado**: arquivos residuais, limpeza de APKs, fotos borradas/semelhantes, compressão/otimização de mídia, perfis simulados de aparelho, tema claro/auto, lembretes/notificações e Gemini.
+- Motivo: o preview usa dados simulados e recursos web; o Android moderno não fornece acesso irrestrito a arquivos de outros apps, detecção de “foto borrada” confiável ou permissões concedidas de terceiros. Exibir esses resultados sem base real seria enganoso.

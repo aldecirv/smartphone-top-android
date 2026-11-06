@@ -41,17 +41,17 @@ class ScreenshotTest {
         idle(main)
         capture(main.window.decorView, "41_clean")
 
-        main.openTab(R.id.navApps)
-        idle(main)
-        capture(main.window.decorView, "42_apps")
-
         main.openTab(R.id.navFiles)
         idle(main)
         capture(main.window.decorView, "43_files")
 
-        main.openTab(R.id.navMore)
+        main.openTab(R.id.navBattery)
         idle(main)
-        capture(main.window.decorView, "44_more")
+        capture(main.window.decorView, "44_battery")
+
+        main.openTab(R.id.navApps)
+        idle(main)
+        capture(main.window.decorView, "45_apps")
 
         val battery = Robolectric.buildActivity(BatteryActivity::class.java).setup().visible().get()
         Shadows.shadowOf(Looper.getMainLooper()).idle()

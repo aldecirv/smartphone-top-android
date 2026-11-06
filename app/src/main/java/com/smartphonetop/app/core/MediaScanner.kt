@@ -59,4 +59,31 @@ object MediaScanner {
         }
         return result
     }
+
+    suspend fun findExactDuplicates(context: android.content.Context, entries: List<MediaEntry>): Set<android.net.Uri> = withContext(Dispatchers.IO) {
+        val candidates = entries
+            .filter { (it.kind == MediaKind.IMAGE || it.kind == MediaKind.VIDEO) && it.sizeBytes in 256L * 1024..80L * 1024 * 1024 }
+            .groupBy { it.sizeBytes }
+            .values
+            .filter { it.size > 1 }
+            .flatten()
+            .take(80)
+        val hashes = mutableMapOf<String, MutableList<MediaEntry>>()
+        candidates.forEach { entry ->
+            runCatching {
+                val digest = java.security.MessageDigest.getInstance("SHA-256")
+                context.contentResolver.openInputStream(entry.uri)?.use { input ->
+                    val buffer = ByteArray(64 * 1024)
+                    while (true) {
+                        val read = input.read(buffer)
+                        if (read <= 0) break
+                        digest.update(buffer, 0, read)
+                    }
+                }
+                val hash = digest.digest().joinToString("") { "%02x".format(it) }
+                hashes.getOrPut(hash) { mutableListOf() }.add(entry)
+            }
+        }
+        hashes.values.filter { it.size > 1 }.flatMap { group -> group.drop(1) }.map { it.uri }.toSet()
+    }
 }

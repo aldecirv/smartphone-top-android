@@ -19,6 +19,7 @@ import com.smartphonetop.app.databinding.FragmentAppsBinding
 import com.smartphonetop.app.ui.Refreshable
 import com.smartphonetop.app.ui.adapters.AppsAdapter
 import com.smartphonetop.app.util.Permissions
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -52,6 +53,7 @@ class AppsFragment : Fragment(), Refreshable {
             filter = when (ids.firstOrNull()) {
                 R.id.filterUser -> "USER"
                 R.id.filterSystem -> "SYSTEM"
+                R.id.filterUnused -> "UNUSED"
                 else -> "ALL"
             }
             render()
@@ -84,11 +86,12 @@ class AppsFragment : Fragment(), Refreshable {
             val filterOk = when (filter) {
                 "USER" -> !app.isSystem
                 "SYSTEM" -> app.isSystem
+                "UNUSED" -> app.isUnused
                 else -> true
             }
             filterOk && (query.isBlank() || app.label.contains(query, true) || app.packageName.contains(query, true))
         }
-        binding.count.text = "${apps.size} aplicativos instalados  •  ${apps.count { !it.isSystem }} de usuário"
+        binding.count.text = "${apps.size} apps  •  ${apps.count { !it.isSystem }} de usuário  •  ${apps.count { it.isUnused }} sem uso"
         binding.list.adapter = AppsAdapter(
             filtered,
             onOpen = { app ->
@@ -96,7 +99,7 @@ class AppsFragment : Fragment(), Refreshable {
                 if (intent != null) runCatching { startActivity(intent) }
                 else Toast.makeText(requireContext(), "Este app não tem tela inicial", Toast.LENGTH_SHORT).show()
             },
-            onInfo = { app -> startActivity(Permissions.appDetailsIntent(app.packageName)) },
+            onInfo = { app -> showAppDetails(app) },
             onUninstall = { app ->
                 if (app.isSystem) {
                     Toast.makeText(requireContext(), "Apps do sistema não podem ser desinstalados aqui", Toast.LENGTH_SHORT).show()
@@ -107,6 +110,30 @@ class AppsFragment : Fragment(), Refreshable {
                 }
             }
         )
+    }
+
+    private fun showAppDetails(app: AppEntry) {
+        val permissions = if (app.permissions.isEmpty()) "Nenhuma permissão solicitada" else
+            app.permissions.take(8).joinToString("\n") { "• " + it.substringAfterLast('.') }
+        val message = buildString {
+            append("Versão: ").append(app.versionName.ifBlank { "não informada" }).append("\n")
+            append("Pacote: ").append(app.packageName).append("\n")
+            append("Instalador: ").append(app.installer ?: "não informado").append("\n")
+            append("Tamanho: ").append(app.formattedAppSize).append(" • Dados: ").append(app.formattedData).append(" • Cache: ").append(app.formattedCache).append("\n")
+            append("Último uso: ").append(app.lastUsedLabel).append("\n\n")
+            append("Permissões solicitadas:\n").append(permissions)
+            if (app.permissions.size > 8) append("\n+ ").append(app.permissions.size - 8).append(" outras")
+        }
+        MaterialAlertDialogBuilder(requireContext())
+            .setTitle(app.label)
+            .setMessage(message)
+            .setNegativeButton("Fechar", null)
+            .setNeutralButton("Configurações") { _, _ -> startActivity(Permissions.appDetailsIntent(app.packageName)) }
+            .setPositiveButton("Abrir") { _, _ ->
+                val intent = requireContext().packageManager.getLaunchIntentForPackage(app.packageName)
+                if (intent != null) runCatching { startActivity(intent) }
+            }
+            .show()
     }
 
     override fun onDestroyView() {

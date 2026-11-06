@@ -30,5 +30,9 @@ class SecurityActivity : AppCompatActivity() {
         binding.summary.text = "${report.passed} de ${report.total} verificações em conformidade"
         binding.list.layoutManager = LinearLayoutManager(this)
         binding.list.adapter = SecurityAdapter(report.checks)
+        val sideloaded = SecurityAuditor.sideloadedApps(this)
+        binding.sideloadDetails.text = if (sideloaded.isEmpty()) "Apps fora da Play Store: nenhum encontrado."
+        else "Apps fora da Play Store: " + sideloaded.take(4).joinToString { it.first } + if (sideloaded.size > 4) "…" else ""
+        binding.permissionDetails.text = "Permissões sensíveis solicitadas: " + SecurityAuditor.sensitiveAppSummary(this)
     }
 }

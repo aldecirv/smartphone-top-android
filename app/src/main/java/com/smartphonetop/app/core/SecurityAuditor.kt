@@ -46,11 +46,13 @@ object SecurityAuditor {
                 warning = !patchCurrent
             )
         )
-        val sideloaded = countSideloadedApps(context)
+        val sideloadedApps = sideloadedApps(context)
+        val sideloaded = sideloadedApps.size
         checks.add(
             SecurityCheck(
                 "Apps instalados fora da loja",
-                if (sideloaded == 0) "Nenhum app de usuário fora da Play Store foi encontrado." else "$sideloaded app(s) de usuário fora da Play Store.",
+                if (sideloaded == 0) "Nenhum app de usuário fora da Play Store foi encontrado."
+                else "$sideloaded app(s) fora da Play Store: ${sideloadedApps.take(3).joinToString { it.first }}${if (sideloaded > 3) "…" else ""}.",
                 sideloaded == 0,
                 warning = sideloaded > 0
             )
@@ -59,18 +61,44 @@ object SecurityAuditor {
         return SecurityReport(checks, score)
     }
 
-    private fun countSideloadedApps(context: Context): Int {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) return 0
+    fun sideloadedApps(context: Context): List<Pair<String, String>> {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) return emptyList()
         return runCatching {
             context.packageManager.getInstalledApplications(PackageManager.GET_META_DATA)
                 .asSequence()
                 .filter { it.packageName != context.packageName }
                 .filter { (it.flags and ApplicationInfo.FLAG_SYSTEM) == 0 }
-                .count { info ->
-                    val source = context.packageManager.getInstallSourceInfo(info.packageName)
-                    val installer = source.installingPackageName
-                    installer != null && installer != "com.android.vending" && installer != "com.google.android.packageinstaller"
-                }
-        }.getOrDefault(0)
+                .mapNotNull { info ->
+                    val installer = context.packageManager.getInstallSourceInfo(info.packageName).installingPackageName
+                    if (installer != null && installer != "com.android.vending" && installer != "com.google.android.packageinstaller") {
+                        val label = context.packageManager.getApplicationLabel(info).toString()
+                        label to (installer ?: "desconhecido")
+                    } else null
+                }.toList()
+        }.getOrDefault(emptyList())
+    }
+
+    fun sensitiveAppSummary(context: Context): String {
+        val dangerous = setOf(
+            android.Manifest.permission.CAMERA,
+            android.Manifest.permission.RECORD_AUDIO,
+            android.Manifest.permission.ACCESS_FINE_LOCATION,
+            android.Manifest.permission.READ_CONTACTS,
+            android.Manifest.permission.READ_SMS,
+            android.Manifest.permission.READ_CALL_LOG
+        )
+        val rows = runCatching {
+            context.packageManager.getInstalledApplications(PackageManager.GET_META_DATA)
+                .asSequence()
+                .filter { (it.flags and ApplicationInfo.FLAG_SYSTEM) == 0 && it.packageName != context.packageName }
+                .mapNotNull { info ->
+                    val pkg = context.packageManager.getPackageInfo(info.packageName, PackageManager.GET_PERMISSIONS)
+                    val requested = (pkg.requestedPermissions ?: emptyArray())
+                        .filter { it in dangerous }
+                    if (requested.isEmpty()) null else context.packageManager.getApplicationLabel(info).toString() to requested.size
+                }.sortedByDescending { it.second }.take(5).toList()
+        }.getOrDefault(emptyList())
+        return if (rows.isEmpty()) "Nenhum app de usuário solicita câmera, microfone, localização, contatos, SMS ou chamadas."
+        else rows.joinToString(" • ") { "${it.first} (${it.second})" }
     }
 }

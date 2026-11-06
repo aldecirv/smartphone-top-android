@@ -13,11 +13,23 @@ data class AppEntry(
     val cacheBytes: Long? = null,
     val isQueryable: Boolean = true,
     val unavailableReason: String? = null,
-    val lastUsed: Long? = null
+    val lastUsed: Long? = null,
+    val versionName: String = "",
+    val installer: String? = null,
+    val permissions: List<String> = emptyList()
 ) {
     val formattedCache: String get() = formatBytes(cacheBytes)
     val formattedAppSize: String get() = formatBytes(appBytes)
     val formattedData: String get() = formatBytes(dataBytes)
+    val lastUsedLabel: String
+        get() {
+            val used = lastUsed ?: return "Uso não informado"
+            if (used <= 0L) return "Nunca usado"
+            val days = ((System.currentTimeMillis() - used) / 86_400_000L).toInt()
+            return if (days <= 0) "Usado hoje" else "Sem uso há $days dia(s)"
+        }
+    val isUnused: Boolean
+        get() = lastUsed != null && (lastUsed <= 0L || (System.currentTimeMillis() - lastUsed) > 30L * 86_400_000L)
 }
 
 data class MediaEntry(

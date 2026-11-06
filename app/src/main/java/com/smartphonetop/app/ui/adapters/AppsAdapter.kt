@@ -20,8 +20,8 @@ class AppsAdapter(
             binding.name.text = item.label
             binding.packageName.text = item.packageName
             binding.sizes.text = if (item.isQueryable)
-                "App ${item.formattedAppSize}  •  Dados ${item.formattedData}  •  Cache ${item.formattedCache}"
-            else "Tamanho indisponível"
+                "App ${item.formattedAppSize}  •  Dados ${item.formattedData}  •  Cache ${item.formattedCache}\n${item.lastUsedLabel}"
+            else "Tamanho indisponível  •  ${item.lastUsedLabel}"
             if (item.icon != null) binding.icon.setImageDrawable(item.icon) else binding.icon.setImageResource(R.drawable.ic_apps)
             binding.root.setOnClickListener { onOpen(item) }
             binding.menu.setOnClickListener { anchor ->

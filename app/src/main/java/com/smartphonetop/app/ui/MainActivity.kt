@@ -12,16 +12,17 @@ import com.smartphonetop.app.R
 import com.smartphonetop.app.core.DeviceStatsReader
 import com.smartphonetop.app.databinding.ActivityMainBinding
 import com.smartphonetop.app.ui.fragments.AppsFragment
+import com.smartphonetop.app.ui.fragments.BatteryFragment
 import com.smartphonetop.app.ui.fragments.CleanFragment
 import com.smartphonetop.app.ui.fragments.FilesFragment
 import com.smartphonetop.app.ui.fragments.HomeFragment
-import com.smartphonetop.app.ui.fragments.MoreFragment
 import com.smartphonetop.app.util.ThemeUtils
 
 class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
     private var selected = R.id.navHome
+    private var moreSheet: MoreSheet? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -37,11 +38,19 @@ class MainActivity : AppCompatActivity() {
         binding.deviceName.text = "${stats.manufacturer} ${stats.model}  •  ${stats.androidVersion.split(" ").firstOrNull()}"
         binding.navHome.setOnClickListener { select(R.id.navHome) }
         binding.navClean.setOnClickListener { select(R.id.navClean) }
-        binding.navApps.setOnClickListener { select(R.id.navApps) }
         binding.navFiles.setOnClickListener { select(R.id.navFiles) }
-        binding.navMore.setOnClickListener { select(R.id.navMore) }
-        binding.moreButton.setOnClickListener { select(R.id.navMore) }
+        binding.navBattery.setOnClickListener { select(R.id.navBattery) }
+        binding.navApps.setOnClickListener { select(R.id.navApps) }
+        binding.navMore.setOnClickListener { showMoreSheet() }
+        binding.moreButton.setOnClickListener { showMoreSheet() }
         select(R.id.navHome)
+    }
+
+    private fun showMoreSheet() {
+        if (moreSheet?.isAdded == true) return
+        selected = R.id.navMore
+        updateNav()
+        moreSheet = MoreSheet().also { it.show(supportFragmentManager, "more") }
     }
 
     fun openTab(id: Int) {
@@ -56,9 +65,9 @@ class MainActivity : AppCompatActivity() {
         selected = id
         val fragment: Fragment = when (id) {
             R.id.navClean -> CleanFragment()
-            R.id.navApps -> AppsFragment()
             R.id.navFiles -> FilesFragment()
-            R.id.navMore -> MoreFragment()
+            R.id.navBattery -> BatteryFragment()
+            R.id.navApps -> AppsFragment()
             else -> HomeFragment()
         }
         supportFragmentManager.beginTransaction()
@@ -69,9 +78,15 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun updateNav() {
-        val icons = listOf(binding.navHomeIcon, binding.navCleanIcon, binding.navAppsIcon, binding.navFilesIcon, binding.navMoreIcon)
-        val labels = listOf(binding.navHomeLabel, binding.navCleanLabel, binding.navAppsLabel, binding.navFilesLabel, binding.navMoreLabel)
-        val ids = listOf(R.id.navHome, R.id.navClean, R.id.navApps, R.id.navFiles, R.id.navMore)
+        val icons = listOf(
+            binding.navHomeIcon, binding.navCleanIcon, binding.navFilesIcon,
+            binding.navBatteryIcon, binding.navAppsIcon, binding.navMoreIcon
+        )
+        val labels = listOf(
+            binding.navHomeLabel, binding.navCleanLabel, binding.navFilesLabel,
+            binding.navBatteryLabel, binding.navAppsLabel, binding.navMoreLabel
+        )
+        val ids = listOf(R.id.navHome, R.id.navClean, R.id.navFiles, R.id.navBattery, R.id.navApps, R.id.navMore)
         icons.forEachIndexed { index, icon ->
             val on = ids[index] == selected
             icon.setColorFilter(ContextCompat.getColor(this, if (on) R.color.brand else R.color.text_tertiary))

@@ -29,11 +29,17 @@ Aplicativo Android nativo em **Kotlin + XML + Material 3**, implementado a parti
 
 ## Telas
 
-- **Início**: saudação, armazenamento com medidor, RAM, bateria, temperatura, segurança, atalhos e análise.
-- **Limpeza**: cache real por app, permissão de uso, abertura das configurações oficiais e registro do espaço liberado.
-- **Apps**: inventário real, busca, filtro usuário/sistema, tamanhos, abrir, informações e desinstalar.
-- **Arquivos**: mídia real com filtros e exclusão confirmada.
-- **Mais**: Bateria, Segurança, TOP AI, Histórico e Ajustes.
+A navegação principal segue o preview: **Início, Limpeza, Arquivos, Bateria e Apps** + **Mais**, com Segurança, TOP AI, Histórico e Ajustes.
+
+- **Início**: saudação, armazenamento com medidor, RAM, bateria, temperatura, segurança, atalhos, **análise real** de cache/mídia e acesso rápido a TOP AI/Bateria.
+- **Limpeza**: cache real por app, permissão de uso, abertura das configurações oficiais, registro do espaço liberado e atalho para mídia/arquivos grandes.
+- **Arquivos**: mídia real, cartões de **arquivos grandes**, **capturas antigas** e **duplicadas exatas por SHA-256**, filtros, miniaturas, seleção múltipla e exclusão confirmada pelo Android.
+- **Bateria**: nível, status, temperatura, voltagem, tecnologia, saúde informada e atalho de economia.
+- **Apps**: inventário real, busca, filtros usuário/sistema/**sem uso**, tamanhos, versão, instalador, permissões solicitadas, último uso e desinstalação pelo sistema.
+- **Segurança**: verificações de configuração, apps fora da Play Store e resumo de permissões sensíveis solicitadas.
+- **TOP AI**: assistente local com respostas baseadas nos dados reais do aparelho.
+- **Histórico**: apenas liberações de espaço realmente medidas, com total e registros.
+- **Ajustes**: permissões, limite de aviso de armazenamento e informações do app.
 
 | Limpeza | Apps | Arquivos |
 |---|---|---|
@@ -65,8 +71,9 @@ app/src/main/java/com/smartphonetop/app/
 ├── core/        DeviceStats, CacheAnalyzer, MediaScanner, SecurityAuditor
 ├── data/        modelos, SmartStore (histórico/configurações)
 ├── ui/          MainActivity, Battery, Security, TopAi, History, Settings
-│   ├── fragments/ Home, Clean, Apps, Files, More
+│   ├── fragments/ Home, Clean, Files, Battery, Apps
 │   ├── adapters/ apps, cache, mídia, histórico, segurança
+│   ├── MoreSheet, DeepScanDialog, atividades secundárias
 │   └── widgets/  StorageGaugeView
 └── util/        Permissions, ThemeUtils
 ```
@@ -101,19 +108,21 @@ Testes:
 gradle :app:testDebugUnitTest
 ```
 
-Cobrem formatação de tamanhos, histórico/limites e screenshots Robolectric de Início, Limpeza, Apps, Arquivos, Mais, Bateria, Segurança, Ajustes, Histórico e TOP AI.
+Cobrem formatação de tamanhos, histórico/limites, navegação/Bateria/folha Mais e screenshots Robolectric de Início, Limpeza, Arquivos, Bateria, Apps, Segurança, Ajustes, Histórico e TOP AI.
 
 ## Limitações
 
 - O resultado da limpeza assistida depende do fabricante e do momento em que o Android atualiza o `StorageStatsManager`.
 - A lista de apps pode incluir apps de sistema; use os filtros.
-- Sem a permissão de uso, os tamanhos aparecem como indisponíveis — não são estimados.
-- A exclusão de mídia depende das permissões e do provedor do arquivo.
+- Sem a permissão de uso, os tamanhos e o “sem uso” aparecem como indisponíveis — não são estimados.
+- A exclusão de mídia depende das permissões e do provedor do arquivo; duplicadas são detectadas por hash SHA-256 de mídia (até 80 arquivos candidatos, 80 MB cada).
+- Categorias do preview que dependem de dados simulados ou de acesso irrestrito — arquivos residuais, APKs obsoletos, fotos borradas/semelhantes, compressão de mídia e perfis de aparelho — **não foram falsificadas**. O app faz apenas o que o Android permite: cache assistido, mídia e auditoria.
 - O app não faz root, não usa acessibilidade para limpar outros apps e não é um antivírus.
+- Tema claro/automático, lembretes e integração Gemini do preview não foram portados; o tema é escuro e o assistente é local/offline.
 - Screenshots foram geradas em Robolectric; em aparelho real os números refletem o dispositivo.
 
 ## Versão
 
-**1.0.0** — primeira versão Android nativa do Smartphone Top, com métricas reais, limpeza assistida de cache, inventário de apps, mídia, bateria, auditoria de segurança, histórico e assistente local.
+**1.1.0** — paridade ampliada com o preview: navegação de 5 centrais + Mais, Bateria como aba principal, análise real no Início, categorias de mídia (grandes/capturas/duplicadas), seleção múltipla, apps sem uso e detalhes de permissões. Tudo com APIs reais, sem inventar resultados.
 
-APK: [**smartphone-top-1.0.0.apk**](https://github.com/aldecirv/smartphone-top-android/releases/download/v1.0.0/smartphone-top-1.0.0.apk) · [Release v1.0.0](https://github.com/aldecirv/smartphone-top-android/releases/tag/v1.0.0)
+APK: [**smartphone-top-1.1.0.apk**](https://github.com/aldecirv/smartphone-top-android/releases/download/v1.1.0/smartphone-top-1.1.0.apk) · [Release v1.1.0](https://github.com/aldecirv/smartphone-top-android/releases/tag/v1.1.0)

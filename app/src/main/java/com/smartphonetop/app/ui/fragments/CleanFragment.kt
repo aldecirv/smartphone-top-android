@@ -46,6 +46,7 @@ class CleanFragment : Fragment(), Refreshable {
         binding.grantUsage.setOnClickListener {
             startActivity(Permissions.usageAccessIntent(requireContext()))
         }
+        binding.mediaShortcut.setOnClickListener { (activity as? com.smartphonetop.app.ui.MainActivity)?.openTab(R.id.navFiles) }
         binding.scanButton.setOnClickListener { scan() }
         refresh()
     }

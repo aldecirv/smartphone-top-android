@@ -101,6 +101,26 @@
             android:layout_marginTop="10dp"
             android:text="Estas verificações usam apenas APIs públicas do Android. Não é um antivírus e não afirma detectar malware."
             android:textSize="10sp" />
+
+        <TextView
+            android:id="@+id/sideloadDetails"
+            style="@style/TextAppearance.Top.Caption"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:text=""
+            android:textColor="@color/amber"
+            android:textSize="9.5sp" />
+
+        <TextView
+            android:id="@+id/permissionDetails"
+            style="@style/TextAppearance.Top.Caption"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:text=""
+            android:textColor="@color/text_secondary"
+            android:textSize="9.5sp" />
     </LinearLayout>
 
     <androidx.recyclerview.widget.RecyclerView

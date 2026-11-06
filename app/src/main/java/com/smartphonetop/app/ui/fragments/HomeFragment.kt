@@ -14,7 +14,10 @@ import com.smartphonetop.app.data.formatBytes
 import com.smartphonetop.app.databinding.FragmentHomeBinding
 import com.smartphonetop.app.ui.MainActivity
 import com.smartphonetop.app.ui.Refreshable
+import com.smartphonetop.app.ui.DeepScanDialog
 import com.smartphonetop.app.ui.SecurityActivity
+import com.smartphonetop.app.ui.BatteryActivity
+import com.smartphonetop.app.ui.TopAiActivity
 import java.util.Calendar
 
 class HomeFragment : Fragment(), Refreshable {
@@ -30,11 +33,13 @@ class HomeFragment : Fragment(), Refreshable {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        binding.scanButton.setOnClickListener { (activity as? MainActivity)?.openTab(R.id.navClean) }
+        binding.scanButton.setOnClickListener { DeepScanDialog().show(parentFragmentManager, "deep_scan") }
         binding.quickClean.setOnClickListener { (activity as? MainActivity)?.openTab(R.id.navClean) }
         binding.quickApps.setOnClickListener { (activity as? MainActivity)?.openTab(R.id.navApps) }
         binding.quickFiles.setOnClickListener { (activity as? MainActivity)?.openTab(R.id.navFiles) }
         binding.quickSecurity.setOnClickListener { startActivity(android.content.Intent(requireContext(), SecurityActivity::class.java)) }
+        binding.quickBattery.setOnClickListener { (activity as? MainActivity)?.openTab(R.id.navBattery) }
+        binding.quickAi.setOnClickListener { startActivity(android.content.Intent(requireContext(), TopAiActivity::class.java)) }
         unsubscribe = SmartStore.subscribe { activity?.runOnUiThread { refresh() } }
         refresh()
     }
