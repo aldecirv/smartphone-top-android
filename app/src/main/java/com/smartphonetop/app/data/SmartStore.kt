@@ -14,6 +14,8 @@ object SmartStore {
     private const val KEY_TOTAL_FREED = "total_freed"
     private const val KEY_THRESHOLD = "storage_threshold"
     private const val KEY_LAST_FREED = "last_freed"
+    private const val KEY_CACHE_SNAPSHOT = "cache_snapshot"
+    private const val KEY_CACHE_REPORTS = "cache_reports"
 
     lateinit var appContext: Context
         private set
@@ -21,12 +23,14 @@ object SmartStore {
     private val listeners = CopyOnWriteArrayList<() -> Unit>()
 
     private val history = mutableListOf<HistoryRecord>()
+    private val cacheReports = mutableListOf<CacheReport>()
 
     @Synchronized
     fun init(context: Context) {
         appContext = context.applicationContext
         prefs = appContext.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
         read()
+        loadCacheReports()
     }
 
     @Synchronized
@@ -113,9 +117,86 @@ object SmartStore {
         prefs.edit().putString(KEY_HISTORY, arr.toString()).apply()
     }
 
+
+    @Synchronized
+    fun saveCacheSnapshot(snapshot: CacheSnapshot) {
+        val json = JSONObject().apply {
+            put("timestamp", snapshot.timestamp)
+            put("totalCacheBytes", snapshot.totalCacheBytes)
+            put("analyzedApps", snapshot.analyzedApps)
+            put("appsWithCache", snapshot.appsWithCache)
+        }
+        prefs.edit().putString(KEY_CACHE_SNAPSHOT, json.toString()).commit()
+        notifyChanged()
+    }
+
+    fun lastCacheSnapshot(): CacheSnapshot? {
+        val raw = prefs.getString(KEY_CACHE_SNAPSHOT, null) ?: return null
+        return runCatching {
+            val o = JSONObject(raw)
+            CacheSnapshot(
+                timestamp = o.optLong("timestamp"),
+                totalCacheBytes = o.optLong("totalCacheBytes"),
+                analyzedApps = o.optInt("analyzedApps"),
+                appsWithCache = o.optInt("appsWithCache")
+            )
+        }.getOrNull()
+    }
+
+    @Synchronized
+    fun addCacheReport(report: CacheReport) {
+        cacheReports.add(0, report)
+        while (cacheReports.size > 50) cacheReports.removeAt(cacheReports.lastIndex)
+        saveCacheReports()
+        notifyChanged()
+    }
+
+    fun cacheReports(): List<CacheReport> = cacheReports.toList()
+
+    @Synchronized
+    fun clearCacheReports() {
+        cacheReports.clear()
+        saveCacheReports()
+        notifyChanged()
+    }
+
+    private fun saveCacheReports() {
+        val arr = JSONArray()
+        cacheReports.forEach { r ->
+            arr.put(JSONObject().apply {
+                put("id", r.id); put("timestamp", r.timestamp)
+                put("analyzedApps", r.analyzedApps); put("appsWithCache", r.appsWithCache)
+                put("operations", r.operations); put("notPermitted", r.notPermitted)
+                put("estimatedBefore", r.estimatedBefore); put("freedBytes", r.freedBytes)
+                put("summary", r.summary)
+            })
+        }
+        prefs.edit().putString(KEY_CACHE_REPORTS, arr.toString()).apply()
+    }
+
+    private fun loadCacheReports() {
+        cacheReports.clear()
+        runCatching {
+            val arr = JSONArray(prefs.getString(KEY_CACHE_REPORTS, "[]"))
+            for (i in 0 until arr.length()) {
+                val o = arr.getJSONObject(i)
+                cacheReports.add(
+                    CacheReport(
+                        id = o.optString("id"), timestamp = o.optLong("timestamp"),
+                        analyzedApps = o.optInt("analyzedApps"), appsWithCache = o.optInt("appsWithCache"),
+                        operations = o.optInt("operations"), notPermitted = o.optInt("notPermitted"),
+                        estimatedBefore = o.optLong("estimatedBefore"), freedBytes = o.optLong("freedBytes"),
+                        summary = o.optString("summary")
+                    )
+                )
+            }
+        }
+    }
+
     @Synchronized
     fun resetForTests() {
         prefs.edit().clear().apply()
         history.clear()
+        cacheReports.clear()
     }
 }

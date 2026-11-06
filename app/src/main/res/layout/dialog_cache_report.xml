@@ -1,0 +1,215 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:paddingStart="20dp"
+        android:paddingTop="4dp"
+        android:paddingEnd="20dp"
+        android:paddingBottom="4dp">
+
+        <TextView
+            style="@style/TextAppearance.Top.Label"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="RELATÓRIO DE LIMPEZA DE CACHE"
+            android:textColor="@color/blue" />
+
+        <TextView
+            android:id="@+id/date"
+            style="@style/TextAppearance.Top.Caption"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="3dp"
+            android:text="" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:orientation="horizontal">
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:background="@drawable/bg_input"
+                android:orientation="vertical"
+                android:padding="9dp">
+
+                <TextView
+                    style="@style/TextAppearance.Top.Caption"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Analisados" />
+
+                <TextView
+                    android:id="@+id/analyzed"
+                    style="@style/TextAppearance.Top.H2"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="0"
+                    android:textSize="18sp" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="7dp"
+                android:layout_weight="1"
+                android:background="@drawable/bg_input"
+                android:orientation="vertical"
+                android:padding="9dp">
+
+                <TextView
+                    style="@style/TextAppearance.Top.Caption"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Com cache" />
+
+                <TextView
+                    android:id="@+id/withCache"
+                    style="@style/TextAppearance.Top.H2"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="0"
+                    android:textColor="@color/purple"
+                    android:textSize="18sp" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="7dp"
+            android:orientation="horizontal">
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:background="@drawable/bg_input"
+                android:orientation="vertical"
+                android:padding="9dp">
+
+                <TextView
+                    style="@style/TextAppearance.Top.Caption"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Operações" />
+
+                <TextView
+                    android:id="@+id/operations"
+                    style="@style/TextAppearance.Top.H2"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="0"
+                    android:textColor="@color/emerald"
+                    android:textSize="18sp" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="7dp"
+                android:layout_weight="1"
+                android:background="@drawable/bg_input"
+                android:orientation="vertical"
+                android:padding="9dp">
+
+                <TextView
+                    style="@style/TextAppearance.Top.Caption"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Não permitidas" />
+
+                <TextView
+                    android:id="@+id/notPermitted"
+                    style="@style/TextAppearance.Top.H2"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="0"
+                    android:textColor="@color/amber"
+                    android:textSize="18sp" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <TextView
+            style="@style/TextAppearance.Top.Caption"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:text="ANTES E DEPOIS (estimativa medida)" />
+
+        <ProgressBar
+            android:id="@+id/beforeBar"
+            style="?android:attr/progressBarStyleHorizontal"
+            android:layout_width="match_parent"
+            android:layout_height="8dp"
+            android:layout_marginTop="6dp"
+            android:max="100"
+            android:progressTint="@color/blue"
+            android:progressBackgroundTint="@color/card_alt" />
+
+        <TextView
+            android:id="@+id/beforeLabel"
+            style="@style/TextAppearance.Top.Caption"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Antes: 0 B"
+            android:textSize="9.5sp" />
+
+        <ProgressBar
+            android:id="@+id/afterBar"
+            style="?android:attr/progressBarStyleHorizontal"
+            android:layout_width="match_parent"
+            android:layout_height="8dp"
+            android:layout_marginTop="8dp"
+            android:max="100"
+            android:progressTint="@color/emerald"
+            android:progressBackgroundTint="@color/card_alt" />
+
+        <TextView
+            android:id="@+id/afterLabel"
+            style="@style/TextAppearance.Top.Caption"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Depois: 0 B"
+            android:textSize="9.5sp" />
+
+        <TextView
+            android:id="@+id/freed"
+            style="@style/TextAppearance.Top.H2"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:gravity="center"
+            android:text="0 B liberados"
+            android:textColor="@color/emerald"
+            android:textSize="20sp" />
+
+        <TextView
+            android:id="@+id/summary"
+            style="@style/TextAppearance.Top.Caption"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:gravity="center"
+            android:text=""
+            android:textSize="9.5sp" />
+
+        <TextView
+            style="@style/TextAppearance.Top.Caption"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:text="O espaço liberado é a diferença medida pelo StorageStatsManager. Se o Android não atualizou o valor, o app não contabiliza."
+            android:textColor="@color/text_tertiary"
+            android:textSize="9sp" />
+    </LinearLayout>
+</androidx.core.widget.NestedScrollView>

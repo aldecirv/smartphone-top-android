@@ -32,13 +32,14 @@ Aplicativo Android nativo em **Kotlin + XML + Material 3**, implementado a parti
 A navegação principal segue o preview: **Início, Limpeza, Arquivos, Bateria e Apps** + **Mais**, com Segurança, TOP AI, Histórico e Ajustes.
 
 - **Início**: saudação, armazenamento com medidor, RAM, bateria, temperatura, segurança, atalhos, **análise real** de cache/mídia e acesso rápido a TOP AI/Bateria.
-- **Limpeza**: cache real por app, permissão de uso, abertura das configurações oficiais, registro do espaço liberado e atalho para mídia/arquivos grandes.
+- **Limpeza de cache profissional**: cache real por app, categoria, pacote, espaço ocupado, última análise, status, seleção individual, **selecionar/desmarcar todos**, **esvaziar cache de todos** e **limpar selecionados** por fluxo assistido; relatório antes/depois e histórico de cache.
+- **Limpeza**: atalho para mídia/arquivos grandes, permissão de uso e registro do espaço liberado.
 - **Arquivos**: mídia real, cartões de **arquivos grandes**, **capturas antigas** e **duplicadas exatas por SHA-256**, filtros, miniaturas, seleção múltipla e exclusão confirmada pelo Android.
 - **Bateria**: nível, status, temperatura, voltagem, tecnologia, saúde informada e atalho de economia.
 - **Apps**: inventário real, busca, filtros usuário/sistema/**sem uso**, tamanhos, versão, instalador, permissões solicitadas, último uso e desinstalação pelo sistema.
 - **Segurança**: verificações de configuração, apps fora da Play Store e resumo de permissões sensíveis solicitadas.
 - **TOP AI**: assistente local com respostas baseadas nos dados reais do aparelho.
-- **Histórico**: apenas liberações de espaço realmente medidas, com total e registros.
+- **Histórico**: histórico geral e **histórico de cache** com data, apps analisados, cache estimado, espaço medido, operações e resultado.
 - **Ajustes**: permissões, limite de aviso de armazenamento e informações do app.
 
 | Limpeza | Apps | Arquivos |
@@ -108,7 +109,7 @@ Testes:
 gradle :app:testDebugUnitTest
 ```
 
-Cobrem formatação de tamanhos, histórico/limites, navegação/Bateria/folha Mais e screenshots Robolectric de Início, Limpeza, Arquivos, Bateria, Apps, Segurança, Ajustes, Histórico e TOP AI.
+Cobrem formatação de tamanhos, histórico/limites, persistência de relatórios de cache, navegação/Bateria/folha Mais, histórico de cache e screenshots Robolectric de Início, Limpeza, Arquivos, Bateria, Apps, Segurança, Ajustes, Histórico e TOP AI.
 
 ## Limitações
 
@@ -117,12 +118,14 @@ Cobrem formatação de tamanhos, histórico/limites, navegação/Bateria/folha M
 - Sem a permissão de uso, os tamanhos e o “sem uso” aparecem como indisponíveis — não são estimados.
 - A exclusão de mídia depende das permissões e do provedor do arquivo; duplicadas são detectadas por hash SHA-256 de mídia (até 80 arquivos candidatos, 80 MB cada).
 - Categorias do preview que dependem de dados simulados ou de acesso irrestrito — arquivos residuais, APKs obsoletos, fotos borradas/semelhantes, compressão de mídia e perfis de aparelho — **não foram falsificadas**. O app faz apenas o que o Android permite: cache assistido, mídia e auditoria.
+- O app não faz root, não usa ADB oculto, acessibilidade para simular toques, `ACTION_CLEAR_APP_CACHE` (não é uma API pública confiável por app) nem “Limpar dados”. O fluxo em lote abre as configurações oficiais **um app por vez**; a limpeza só é contabilizada quando o `StorageStatsManager` confirma o delta.
+- Em HyperOS/Xiaomi, a tela de armazenamento pode variar; o app usa o intent oficial de detalhes do app e mede antes/depois. Nenhum dado pessoal é apagado.
 - O app não faz root, não usa acessibilidade para limpar outros apps e não é um antivírus.
 - Tema claro/automático, lembretes e integração Gemini do preview não foram portados; o tema é escuro e o assistente é local/offline.
 - Screenshots foram geradas em Robolectric; em aparelho real os números refletem o dispositivo.
 
 ## Versão
 
-**1.1.0** — paridade ampliada com o preview: navegação de 5 centrais + Mais, Bateria como aba principal, análise real no Início, categorias de mídia (grandes/capturas/duplicadas), seleção múltipla, apps sem uso e detalhes de permissões. Tudo com APIs reais, sem inventar resultados.
+**1.2.0** — módulo profissional de **Limpeza Inteligente de Cache de Todos os Aplicativos**: varredura real, lista com ícone/nome/pacote/cache/espaço/categoria/última análise/status, seleção individual, selecionar/desmarcar todos, fluxo assistido em lote, relatório antes/depois e histórico de cache. Indicador de cache na tela inicial.
 
-APK: [**smartphone-top-1.1.0.apk**](https://github.com/aldecirv/smartphone-top-android/releases/download/v1.1.0/smartphone-top-1.1.0.apk) · [Release v1.1.0](https://github.com/aldecirv/smartphone-top-android/releases/tag/v1.1.0)
+APK: [**smartphone-top-1.2.0.apk**](https://github.com/aldecirv/smartphone-top-android/releases/download/v1.2.0/smartphone-top-1.2.0.apk) · [Release v1.2.0](https://github.com/aldecirv/smartphone-top-android/releases/tag/v1.2.0)

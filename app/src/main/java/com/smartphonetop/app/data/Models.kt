@@ -16,7 +16,8 @@ data class AppEntry(
     val lastUsed: Long? = null,
     val versionName: String = "",
     val installer: String? = null,
-    val permissions: List<String> = emptyList()
+    val permissions: List<String> = emptyList(),
+    val category: String = "Outros"
 ) {
     val formattedCache: String get() = formatBytes(cacheBytes)
     val formattedAppSize: String get() = formatBytes(appBytes)
@@ -47,6 +48,36 @@ data class MediaEntry(
 
 enum class MediaKind(val label: String) {
     IMAGE("Imagem"), VIDEO("Vídeo"), AUDIO("Áudio"), DOCUMENT("Documento"), OTHER("Arquivo")
+}
+
+data class CacheSnapshot(
+    val timestamp: Long,
+    val totalCacheBytes: Long,
+    val analyzedApps: Int,
+    val appsWithCache: Int
+) {
+    val dateLabel: String get() = java.text.SimpleDateFormat("dd/MM/yyyy 'às' HH:mm", Locale("pt", "BR"))
+        .format(java.util.Date(timestamp))
+}
+
+data class CacheReport(
+    val id: String = java.util.UUID.randomUUID().toString(),
+    val timestamp: Long = System.currentTimeMillis(),
+    val analyzedApps: Int,
+    val appsWithCache: Int,
+    val operations: Int,
+    val notPermitted: Int,
+    val estimatedBefore: Long,
+    val freedBytes: Long,
+    val summary: String
+) {
+    val dateLabel: String get() = java.text.SimpleDateFormat("dd/MM/yyyy 'às' HH:mm", Locale("pt", "BR"))
+        .format(java.util.Date(timestamp))
+    val resultLabel: String get() = when {
+        freedBytes > 0 -> "Limpeza medida"
+        operations > 0 -> "Aberto nas configurações; sem delta medido"
+        else -> "Nenhuma operação permitida"
+    }
 }
 
 data class HistoryRecord(

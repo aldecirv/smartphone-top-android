@@ -72,19 +72,22 @@ class CacheAnalyzer(private val context: Context) {
             }
         }.getOrNull()
         val system = (info.flags and ApplicationInfo.FLAG_SYSTEM) != 0
+        val category = categoryLabel(info, system)
         if (!hasAccess) {
             return AppEntry(
                 info.packageName, label, icon, isSystem = system,
                 isQueryable = false,
                 unavailableReason = "Conceda Acesso a Dados de Uso para ler o cache real.",
-                lastUsed = lastUsed, versionName = version, installer = installer, permissions = permissions
+                lastUsed = lastUsed, versionName = version, installer = installer,
+                permissions = permissions, category = category
             )
         }
         if (statsManager == null || Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
             return AppEntry(
                 info.packageName, label, icon, isSystem = system,
                 isQueryable = false, unavailableReason = "StorageStatsManager indisponível neste Android.",
-                lastUsed = lastUsed, versionName = version, installer = installer, permissions = permissions
+                lastUsed = lastUsed, versionName = version, installer = installer,
+                permissions = permissions, category = category
             )
         }
         return try {
@@ -103,23 +106,42 @@ class CacheAnalyzer(private val context: Context) {
                 lastUsed = lastUsed,
                 versionName = version,
                 installer = installer,
-                permissions = permissions
+                permissions = permissions,
+                category = category
             )
         } catch (security: SecurityException) {
             AppEntry(
                 info.packageName, label, icon, isSystem = system,
                 isQueryable = false, unavailableReason = "O fabricante bloqueou a leitura deste app.",
-                lastUsed = lastUsed, versionName = version, installer = installer, permissions = permissions
+                lastUsed = lastUsed, versionName = version, installer = installer,
+                permissions = permissions, category = category
             )
         } catch (error: Exception) {
             AppEntry(
                 info.packageName, label, icon, isSystem = system,
                 isQueryable = false, unavailableReason = "O Android não disponibilizou o tamanho deste app.",
-                lastUsed = lastUsed, versionName = version, installer = installer, permissions = permissions
+                lastUsed = lastUsed, versionName = version, installer = installer,
+                permissions = permissions, category = category
             )
         }
     }
 
+
+    private fun categoryLabel(info: ApplicationInfo, system: Boolean): String {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return if (system) "Sistema" else "Outros"
+        return when (info.category) {
+            ApplicationInfo.CATEGORY_GAME -> "Jogos"
+            ApplicationInfo.CATEGORY_AUDIO -> "Áudio"
+            ApplicationInfo.CATEGORY_VIDEO -> "Vídeo"
+            ApplicationInfo.CATEGORY_IMAGE -> "Imagem"
+            ApplicationInfo.CATEGORY_SOCIAL -> "Social"
+            ApplicationInfo.CATEGORY_NEWS -> "Notícias"
+            ApplicationInfo.CATEGORY_MAPS -> "Mapas"
+            ApplicationInfo.CATEGORY_PRODUCTIVITY -> "Produtividade"
+            ApplicationInfo.CATEGORY_ACCESSIBILITY -> "Acessibilidade"
+            else -> if (system) "Sistema" else "Outros"
+        }
+    }
     private fun lastUsedMap(): Map<String, Long> {
         if (!Permissions.hasUsageAccess(context)) return emptyMap()
         return runCatching {

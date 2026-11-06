@@ -268,7 +268,7 @@
                         style="@style/TextAppearance.Top.BodyStrong"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Smartphone Top 1.0.0"
+                        android:text="Smartphone Top 1.2.0"
                         android:textSize="12.5sp" />
 
                     <TextView

@@ -57,6 +57,15 @@ class MainActivity : AppCompatActivity() {
         select(id)
     }
 
+    fun openCacheScan() {
+        selected = R.id.navClean
+        supportFragmentManager.beginTransaction()
+            .setCustomAnimations(android.R.anim.fade_in, android.R.anim.fade_out)
+            .replace(R.id.content, CleanFragment.newInstance(autoScan = true))
+            .commit()
+        updateNav()
+    }
+
     fun openActivity(activity: Class<*>) {
         startActivity(Intent(this, activity))
     }

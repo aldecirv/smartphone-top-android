@@ -40,6 +40,8 @@ class HomeFragment : Fragment(), Refreshable {
         binding.quickSecurity.setOnClickListener { startActivity(android.content.Intent(requireContext(), SecurityActivity::class.java)) }
         binding.quickBattery.setOnClickListener { (activity as? MainActivity)?.openTab(R.id.navBattery) }
         binding.quickAi.setOnClickListener { startActivity(android.content.Intent(requireContext(), TopAiActivity::class.java)) }
+        binding.cacheAnalyze.setOnClickListener { (activity as? MainActivity)?.openCacheScan() }
+        binding.cacheCard.setOnClickListener { (activity as? MainActivity)?.openCacheScan() }
         unsubscribe = SmartStore.subscribe { activity?.runOnUiThread { refresh() } }
         refresh()
     }
@@ -77,6 +79,10 @@ class HomeFragment : Fragment(), Refreshable {
         val threshold = SmartStore.storageThreshold()
         binding.warningCard.visibility = if (stats.storagePercent >= threshold) View.VISIBLE else View.GONE
         binding.warningText.text = "Armazenamento em ${stats.storagePercent}% (limite de $threshold%). Libere espaço quando puder."
+        val cache = SmartStore.lastCacheSnapshot()
+        binding.cacheIndicator.text = cache?.let { formatBytes(it.totalCacheBytes) } ?: "0 B"
+        binding.cacheLast.text = cache?.let { "Última análise: ${it.dateLabel}" } ?: "Nunca analisado"
+        binding.cacheCount.text = cache?.let { "${it.analyzedApps} apps analisados • ${it.appsWithCache} com cache" } ?: "0 apps analisados"
         val last = SmartStore.history().firstOrNull()
         binding.lastClean.text = last?.let {
             "Última limpeza: ${it.dateLabel}  •  ${formatBytes(it.freedBytes)} liberados"

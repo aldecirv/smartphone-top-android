@@ -30,7 +30,7 @@ Base: `smartphone-top.zip` (web app React/Vite + trechos de Android Compose em `
 | TOP AI | Gemini via servidor | Assistente local determinístico, sem rede |
 | Histórico | Mock | `SmartStore` com apenas liberações medidas |
 | Permissões | `MANAGE_EXTERNAL_STORAGE` etc. | Uso, mídia e escrita antiga; sem acesso total arbitrário |
-| Testes | Nenhum | 5 testes + screenshots |
+| Testes | Nenhum | 7 testes + screenshots |
 | APK | Não existia | APK assinado, CI e release |
 
 ## Escopo implementado
@@ -75,3 +75,17 @@ O preview em `smartphone-top.ai.studio` foi comparado com a versão 1.0.0. A 1.1
   - **Implementado com dados reais**: navegação, cache assistido, mídia, duplicadas exatas, apps, bateria, segurança, histórico, ajustes.
   - **Não implementado / não falsificado**: arquivos residuais, limpeza de APKs, fotos borradas/semelhantes, compressão/otimização de mídia, perfis simulados de aparelho, tema claro/auto, lembretes/notificações e Gemini.
 - Motivo: o preview usa dados simulados e recursos web; o Android moderno não fornece acesso irrestrito a arquivos de outros apps, detecção de “foto borrada” confiável ou permissões concedidas de terceiros. Exibir esses resultados sem base real seria enganoso.
+
+## Revisão 1.2.0 — Limpeza Inteligente de Cache
+
+Implementação do módulo profissional solicitado, sobre o app existente (sem recriar o projeto):
+
+- Varredura de todos os pacotes com `StorageStatsManager` e `QUERY_ALL_PACKAGES`.
+- Dados por app: nome, ícone, pacote, cache, app+dados ocupados, categoria (`ApplicationInfo.category`), horário da análise e status.
+- Lista ordenada por cache, checkboxes, botão individual e ações de seleção.
+- Lote assistido: abre `Settings.ACTION_APPLICATION_DETAILS_SETTINGS` por app, aguarda o retorno, mede o delta e continua com confirmação do usuário.
+- Relatório com analisados, com cache, operações, não permitidas, estimado antes, liberado medido, data/hora e barras antes/depois.
+- Histórico persistente de relatórios de cache.
+- Indicador “Cache dos aplicativos” na tela inicial, com última análise e atalho para analisar.
+- Testes de persistência e da tela de histórico; screenshots Robolectric.
+- **Não implementado**: chamada `ACTION_CLEAR_APP_CACHE` por pacote (não é API pública confiável), root, ADB, acessibilidade e “Limpar dados”. Em aparelho real não disponível neste ambiente (nenhum dispositivo conectado); a validação de campo deve ser feita em HyperOS/Xiaomi e AOSP.
